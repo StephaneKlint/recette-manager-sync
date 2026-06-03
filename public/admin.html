@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Import Données</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1419; color: #e0e0e0; padding: 24px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { color: #01696f; margin-bottom: 24px; }
+    .card { background: #1a1f26; padding: 24px; border-radius: 8px; border: 1px solid #2a3038; margin-bottom: 24px; }
+    textarea { width: 100%; height: 300px; padding: 12px; background: #2a3038; color: #e0e0e0; border: 1px solid #3a4a52; border-radius: 6px; font-family: monospace; margin-bottom: 16px; }
+    .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
+    .btn-primary { background: #01696f; color: #fff; }
+    .btn-primary:hover { background: #005a5f; }
+    .btn-secondary { background: #3a4a52; color: #f0f0f0; }
+    .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; }
+    .alert-success { background: #10b981; color: #fff; }
+    .alert-error { background: #ef4444; color: #fff; }
+    .alert-info { background: #3b82f6; color: #fff; }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-box { background: #2a3038; padding: 16px; border-radius: 6px; }
+    .stat-label { font-size: 12px; color: #808080; margin-bottom: 6px; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #01696f; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Admin Panel - Import Données</h1>
+
+    <div id="alerts"></div>
+
+    <div class="card">
+      <h2 style="margin-bottom: 16px;">État de la Base de Données</h2>
+      <div class="stats">
+        <div class="stat-box">
+          <div class="stat-label">Cahiers</div>
+          <div class="stat-value" id="count-cahiers">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Lots</div>
+          <div class="stat-value" id="count-lots">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Testeurs</div>
+          <div class="stat-value" id="count-testeurs">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Anomalies</div>
+          <div class="stat-value" id="count-anomalies">0</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="loadStats()">🔄 Rafraîchir</button>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom: 16px;">1️⃣ Importer les Données (JSON)</h2>
+      <p style="margin-bottom: 16px; font-size: 12px; color: #a8d0d5;">
+        Collez les données JSON exportées au format:<br>
+        <code>{ "cahiers": [...], "lots": [...], "testeurs": [...], "anomalies": [...] }</code>
+      </p>
+      <textarea id="json-data" placeholder='{"cahiers": [], "lots": [], "testeurs": [], "anomalies": []}'></textarea>
+      <button class="btn btn-primary" onclick="importJSON()">📤 Importer JSON</button>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom: 16px;">2️⃣ Exporter les Données</h2>
+      <p style="margin-bottom: 16px; font-size: 12px; color: #a8d0d5;">Télécharge toutes les données de la base en JSON.</p>
+      <button class="btn btn-secondary" onclick="exportJSON()">📥 Télécharger JSON</button>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom: 16px;">3️⃣ Exemple de Données</h2>
+      <p style="margin-bottom: 16px; font-size: 12px; color: #a8d0d5;">Créer quelques données de test.</p>
+      <button class="btn btn-secondary" onclick="createSampleData()">🌱 Créer Données Test</button>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom: 16px;">4️⃣ Vider la Base</h2>
+      <p style="margin-bottom: 16px; font-size: 12px; color: #a8d0d5;">Supprime TOUTES les données. ⚠️ Attention!</p>
+      <button class="btn btn-danger" style="background: #dc2626;" onclick="if(confirm('Êtes-vous sûr?')) clearDatabase()">🗑️ Vider la Base</button>
+    </div>
+
+    <p style="text-align: center; font-size: 12px; color: #808080; margin-top: 24px;">
+      Retour à l'<a href="/" style="color: #01696f;">application</a> | <a href="/app.html" style="color: #01696f;">Version complète</a>
+    </p>
+  </div>
+
+  <script>
+    const API_URL = '/api';
+
+    function addAlert(message, type = 'info') {
+      const alerts = document.getElementById('alerts');
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+      alerts.appendChild(alert);
+      setTimeout(() => alert.remove(), 5000);
+    }
+
+    async function loadStats() {
+      try {
+        const cahiers = await fetch(`${API_URL}/cahiers`).then(r => r.json());
+        const lots = await fetch(`${API_URL}/lots`).then(r => r.json());
+        const testeurs = await fetch(`${API_URL}/testeurs`).then(r => r.json());
+        const anomalies = await fetch(`${API_URL}/anomalies`).then(r => r.json());
+
+        document.getElementById('count-cahiers').textContent = cahiers.length || 0;
+        document.getElementById('count-lots').textContent = lots.length || 0;
+        document.getElementById('count-testeurs').textContent = testeurs.length || 0;
+        document.getElementById('count-anomalies').textContent = anomalies.length || 0;
+
+        addAlert('✅ Statistiques chargées', 'success');
+      } catch (error) {
+        addAlert(`❌ Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    async function importJSON() {
+      try {
+        const jsonText = document.getElementById('json-data').value;
+        if (!jsonText.trim()) {
+          addAlert('⚠️ Veuillez coller des données JSON', 'info');
+          return;
+        }
+
+        const data = JSON.parse(jsonText);
+        const response = await fetch(`${API_URL}/import-data`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          addAlert(`✅ ${result.imported} objets importés!`, 'success');
+          document.getElementById('json-data').value = '';
+          setTimeout(() => loadStats(), 1000);
+        } else {
+          addAlert(`❌ Erreur: ${result.error}`, 'error');
+        }
+      } catch (error) {
+        addAlert(`❌ Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    async function exportJSON() {
+      try {
+        const response = await fetch(`${API_URL}/export-data`);
+        const data = await response.json();
+
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `recette-manager-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        addAlert('✅ Données exportées!', 'success');
+      } catch (error) {
+        addAlert(`❌ Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    async function createSampleData() {
+      try {
+        const sampleData = {
+          cahiers: [
+            { id: 'cah-001', numero: 'CAH-001', nom: 'Cahier Dynamics', type: 'Unitaire', runs: [], modules: [], cases: [] },
+            { id: 'cah-002', numero: 'CAH-002', nom: 'Cahier Workflow', type: 'Modulaire', runs: [], modules: [], cases: [] },
+            { id: 'cah-003', numero: 'CAH-003', nom: 'Cahier Métier', type: 'Métier', runs: [], modules: [], cases: [] }
+          ],
+          lots: [
+            { id: 'lot-001', numero: 'LOT-4.3.12', nom: 'Lot 4.3.12 - Release Module' }
+          ],
+          testeurs: [
+            { id: 'test-001', nom: 'Alice Dupont', email: 'alice@example.com' },
+            { id: 'test-002', nom: 'Bob Martin', email: 'bob@example.com' },
+            { id: 'test-003', nom: 'Charlie Leblanc', email: 'charlie@example.com' }
+          ],
+          anomalies: []
+        };
+
+        const response = await fetch(`${API_URL}/import-data`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sampleData)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          addAlert(`✅ Données test créées! (${result.imported} objets)`, 'success');
+          setTimeout(() => loadStats(), 1000);
+        }
+      } catch (error) {
+        addAlert(`❌ Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    async function clearDatabase() {
+      try {
+        addAlert('🗑️ Suppression en cours...', 'info');
+        // Récupérer tous les IDs et les supprimer
+        const cahiers = await fetch(`${API_URL}/cahiers`).then(r => r.json());
+        for (const c of cahiers) {
+          await fetch(`${API_URL}/cahiers/${c.id}`, { method: 'DELETE' });
+        }
+        addAlert('✅ Base vidée!', 'success');
+        setTimeout(() => loadStats(), 1000);
+      } catch (error) {
+        addAlert(`❌ Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    // Charger les stats au démarrage
+    window.onload = () => {
+      loadStats();
+    };
+  </script>
+</body>
+</html>
