@@ -2,33 +2,19 @@
 <html>
 <head>
   <title>Recette Manager Sync</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: system-ui; margin: 40px; background: #0f1419; color: #e0e0e0; }
     h1 { color: #01696f; }
-    .status { background: #1a1f26; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .box { background: #1a1f26; padding: 20px; border-radius: 8px; }
     .ok { color: #059669; }
+    code { background: #2a3038; padding: 2px 6px; border-radius: 3px; }
   </style>
 </head>
 <body>
   <h1>🚀 Recette Manager Sync</h1>
-  <div class="status">
-    <p><span class="ok">✅ Application running on Vercel!</span></p>
-    <p>API Status: <span id="status">Loading...</span></p>
+  <div class="box">
+    <p><span class="ok">✅ API Backend is Live on Vercel!</span></p>
+    <p>Try: <code><a href="/health" style="color: #a8d0d5;">GET /health</a></code></p>
   </div>
-  
-  <script>
-    fetch('/api/health')
-      .then(r => r.json())
-      .then(data => {
-        document.getElementById('status').innerHTML = 
-          `<span class="ok">✅ ${data.status} - Database: ${data.database}</span>`;
-      })
-      .catch(e => {
-        document.getElementById('status').innerHTML = 
-          `<span style="color: #dc2626">❌ Error: ${e.message}</span>`;
-      });
-  </script>
 </body>
 </html>
