@@ -6,6 +6,7 @@ module.exports = (req, res) => {
     timestamp: new Date().toISOString()
   };
 
+  res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
-  res.status(200).end(JSON.stringify(response));
+  res.end(JSON.stringify(response));
 };
