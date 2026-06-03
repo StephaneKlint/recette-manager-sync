@@ -1,43 +1,48 @@
-// Vercel API endpoint - handles all /api/* routes
-const express = require('express');
-const { Pool } = require('pg');
-
-const app = express();
-app.use(express.json());
-
-// PostgreSQL pool
-let pool = null;
-if (process.env.DATABASE_URL) {
-  try {
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
+// Simple Vercel Serverless Function - NO Express
+export default function handler(req, res) {
+  // Health check endpoint
+  if (req.url === '/api/health' || req.url === '/api/health?') {
+    return res.status(200).json({
+      status: 'ok',
+      database: process.env.DATABASE_URL ? 'configured' : 'not-configured',
+      timestamp: new Date().toISOString()
     });
-  } catch (e) {
-    console.error('DB connection error:', e.message);
   }
+
+  // Default API response
+  if (req.url.startsWith('/api')) {
+    return res.status(200).json({
+      message: 'Recette Manager Sync API',
+      endpoints: {
+        health: '/api/health',
+        cahiers: '/api/cahiers',
+        lots: '/api/lots'
+      }
+    });
+  }
+
+  // Homepage
+  res.status(200).setHeader('Content-Type', 'text/html');
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Recette Manager</title>
+      <style>
+        body { font-family: system-ui; margin: 40px; background: #0f1419; color: #e0e0e0; }
+        h1 { color: #01696f; }
+        .box { background: #1a1f26; padding: 20px; border-radius: 8px; }
+        .ok { color: #059669; }
+      </style>
+    </head>
+    <body>
+      <h1>🚀 Recette Manager Sync</h1>
+      <div class="box">
+        <p><span class="ok">✅ API Running on Vercel!</span></p>
+        <p>Database: <strong>${process.env.DATABASE_URL ? '✅ Configured (Neon)' : '❌ Not configured'}</strong></p>
+        <p><a href="/api/health">Check Health</a></p>
+      </div>
+    </body>
+    </html>
+  `);
 }
-
-// Health endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    database: pool ? 'configured' : 'not-configured',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Default response
-app.get('/api/', (req, res) => {
-  res.json({
-    message: 'Recette Manager Sync API',
-    database: pool ? 'configured' : 'not-configured'
-  });
-});
-
-// Any other /api/* routes
-app.all('*', (req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
-
-module.exports = app;
