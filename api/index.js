@@ -1,5 +1,5 @@
-// Simple Vercel Serverless Function - NO Express
-export default function handler(req, res) {
+// Vercel Serverless Handler
+module.exports = (req, res) => {
   // Health check endpoint
   if (req.url === '/api/health' || req.url === '/api/health?') {
     return res.status(200).json({
@@ -23,7 +23,7 @@ export default function handler(req, res) {
 
   // Homepage
   res.status(200).setHeader('Content-Type', 'text/html');
-  res.send(`
+  return res.send(`
     <!DOCTYPE html>
     <html>
     <head>
@@ -45,4 +45,4 @@ export default function handler(req, res) {
     </body>
     </html>
   `);
-}
+};
