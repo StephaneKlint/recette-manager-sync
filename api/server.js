@@ -5,7 +5,7 @@ const compression = require('compression');
 const { v4: uuid } = require('uuid');
 require('dotenv').config();
 
-const app = express();
+module.exports = function(app) {
 
 // Middleware
 app.use(cors());
@@ -193,4 +193,4 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route non trouvée' });
 });
 
-module.exports = app;
+};
