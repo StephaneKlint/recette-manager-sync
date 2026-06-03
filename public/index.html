@@ -1,164 +1,58 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recette Manager - Real-time Collaboration</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #0f1419;
-            color: #e0e0e0;
-            padding: 20px;
-        }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { color: #01696f; margin-bottom: 20px; }
-        .status {
-            background: #1a1f26;
-            border: 1px solid #2a3038;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .status-good { color: #059669; }
-        .status-warning { color: #f5af00; }
-        .status-error { color: #dc2626; }
-        .button {
-            background: #01696f;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .button:hover { background: #005a5f; }
-        .cahiers-list { margin-top: 20px; }
-        .cahier-item {
-            background: #1a1f26;
-            border: 1px solid #2a3038;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-    </style>
+  <title>Recette Manager - Vercel Test</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; margin: 40px; background: #0f1419; color: #e0e0e0; }
+    .box { background: #1a1f26; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    h1 { color: #01696f; }
+    .status { font-weight: bold; }
+    .ok { color: #059669; }
+    .error { color: #dc2626; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📋 Recette Manager - Sync</h1>
+  <h1>🚀 Recette Manager Sync</h1>
+  
+  <div class="box">
+    <h2>Status</h2>
+    <p class="status">
+      <span class="ok">✅ App is running on Vercel!</span>
+    </p>
+    <p>Backend API endpoints:</p>
+    <ul>
+      <li><code>/api/recette</code> - Health check & cahier list</li>
+      <li><code>/api/cahiers</code> - Get all cahiers</li>
+      <li><code>/api/lots</code> - Get all lots</li>
+    </ul>
+  </div>
 
-        <div class="status">
-            <p>🔌 Server Status: <span class="status-good" id="server-status">Checking...</span></p>
-            <p>💾 Database: <span id="db-status">Checking...</span></p>
-            <p>🔄 WebSocket: <span id="ws-status">Checking...</span></p>
-        </div>
+  <div class="box">
+    <h2>Architecture</h2>
+    <p>Stack: Node.js + Express + Socket.IO + PostgreSQL (Neon)</p>
+    <p>Frontend migration: In progress</p>
+    <p>Database: <span id="db-status">Checking...</span></p>
+  </div>
 
-        <button class="button" onclick="loadCahiers()">📂 Load Cahiers</button>
-        <button class="button" onclick="createTestCahier()">➕ Create Test Cahier</button>
-
-        <div class="cahiers-list" id="cahiers"></div>
-    </div>
-
-    <script src="https://cdn.socket.io/4.7.2/socket.io.js"></script>
-    <script>
-        const API_URL = window.location.origin;
-        let socket = null;
-
-        // Connect to server
-        async function init() {
-            console.log('🚀 Initializing Recette Manager Sync...');
-
-            // Check health
-            try {
-                const response = await fetch(`${API_URL}/health`);
-                const data = await response.json();
-                console.log('✅ Server health:', data);
-
-                document.getElementById('server-status').innerHTML = `<span class="status-good">✅ Online</span>`;
-                document.getElementById('db-status').innerHTML = data.database === 'configured'
-                    ? `<span class="status-good">✅ ${data.database}</span>`
-                    : `<span class="status-warning">⚠️ ${data.database}</span>`;
-                document.getElementById('ws-status').innerHTML = `<span class="status-good">✅ ${data.websocket}</span>`;
-            } catch (err) {
-                console.error('❌ Server error:', err);
-                document.getElementById('server-status').innerHTML = `<span class="status-error">❌ Offline</span>`;
-            }
-
-            // Connect WebSocket
-            socket = io(API_URL, {
-                transports: ['websocket', 'polling']
-            });
-
-            socket.on('connect', () => {
-                console.log('🔌 WebSocket connected:', socket.id);
-            });
-
-            socket.on('cahier-updated', (data) => {
-                console.log('📝 Cahier updated:', data);
-                loadCahiers();
-            });
-
-            socket.on('user-joined', (data) => {
-                console.log('👤 User joined:', data);
-            });
+  <script>
+    // Check API status
+    fetch('/api/recette')
+      .then(r => r.json())
+      .then(data => {
+        console.log('API Response:', data);
+        const dbEl = document.getElementById('db-status');
+        if (data.database === 'configured') {
+          dbEl.innerHTML = '<span class="ok">✅ PostgreSQL/Neon configured</span>';
+        } else {
+          dbEl.innerHTML = '<span class="error">❌ Database not configured</span>';
         }
-
-        // Load cahiers from server
-        async function loadCahiers() {
-            try {
-                const response = await fetch(`${API_URL}/api/cahiers`);
-                const cahiers = await response.json();
-                console.log('📚 Cahiers loaded:', cahiers);
-
-                const list = document.getElementById('cahiers');
-                if (cahiers.length === 0) {
-                    list.innerHTML = '<p style="color: #808080;">Aucun cahier. Créez-en un pour commencer.</p>';
-                    return;
-                }
-
-                list.innerHTML = cahiers.map(cahier => `
-                    <div class="cahier-item">
-                        <div>
-                            <strong>${cahier.nom || 'Sans nom'}</strong><br>
-                            <small style="color: #808080;">Type: ${cahier.type || 'N/A'}</small>
-                        </div>
-                        <small>${new Date(cahier.updated_at).toLocaleDateString('fr-FR')}</small>
-                    </div>
-                `).join('');
-            } catch (err) {
-                console.error('❌ Error loading cahiers:', err);
-            }
-        }
-
-        // Create a test cahier
-        async function createTestCahier() {
-            const cahier = {
-                nom: `Cahier Test ${new Date().getTime()}`,
-                type: 'Unitaire',
-                status: 'En cours',
-                data: { runs: [], modules: [] }
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/api/cahiers`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(cahier)
-                });
-                const created = await response.json();
-                console.log('✅ Cahier created:', created);
-                loadCahiers();
-            } catch (err) {
-                console.error('❌ Error creating cahier:', err);
-            }
-        }
-
-        // Initialize on page load
-        window.addEventListener('load', init);
-    </script>
+      })
+      .catch(e => {
+        console.error('API Error:', e);
+        document.getElementById('db-status').innerHTML = '<span class="error">❌ API Error</span>';
+      });
+  </script>
 </body>
 </html>
