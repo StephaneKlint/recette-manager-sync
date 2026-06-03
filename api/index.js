@@ -1,7 +1,10 @@
-// Vercel Serverless Function Handler
-// Re-export the Express app from app.js
-
-const { app } = require('../app.js');
-
-// Export pour Vercel
-module.exports = app;
+module.exports = (req, res) => {
+  res.status(200).json({
+    message: 'Recette Manager Sync API',
+    endpoints: {
+      health: '/api/health',
+      cahiers: '/api/cahiers',
+      lots: '/api/lots'
+    }
+  });
+};
