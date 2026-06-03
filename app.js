@@ -33,16 +33,22 @@ const pool = new Pool({
 
 console.log(`[${NODE_ENV.toUpperCase()}] Starting Recette Manager Sync server...`);
 
-// Test DB connection and initialize tables
+// Test DB connection and initialize tables (non-blocking)
 if (process.env.DATABASE_URL) {
-  pool.query('SELECT NOW()', async (err) => {
-    if (err) {
-      console.error('[DB] ❌ Connection failed:', err.message);
-    } else {
-      console.log('[DB] ✅ Connected successfully');
-      await initDatabase();
-    }
-  });
+  setTimeout(() => {
+    pool.query('SELECT NOW()', async (err) => {
+      if (err) {
+        console.error('[DB] ❌ Connection failed:', err.message);
+      } else {
+        console.log('[DB] ✅ Connected successfully');
+        try {
+          await initDatabase();
+        } catch (e) {
+          console.error('[DB] ❌ Init error:', e.message);
+        }
+      }
+    });
+  }, 1000);
 } else {
   console.warn('[DB] ⚠️ DATABASE_URL not set - running in memory mode');
 }
