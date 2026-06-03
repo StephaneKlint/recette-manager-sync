@@ -1,57 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Recette Manager - Vercel Test</title>
+  <title>Recette Manager Sync</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: sans-serif; margin: 40px; background: #0f1419; color: #e0e0e0; }
-    .box { background: #1a1f26; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    body { font-family: system-ui; margin: 40px; background: #0f1419; color: #e0e0e0; }
     h1 { color: #01696f; }
-    .status { font-weight: bold; }
+    .status { background: #1a1f26; padding: 20px; border-radius: 8px; margin: 20px 0; }
     .ok { color: #059669; }
-    .error { color: #dc2626; }
   </style>
 </head>
 <body>
   <h1>🚀 Recette Manager Sync</h1>
+  <div class="status">
+    <p><span class="ok">✅ Application running on Vercel!</span></p>
+    <p>API Status: <span id="status">Loading...</span></p>
+  </div>
   
-  <div class="box">
-    <h2>Status</h2>
-    <p class="status">
-      <span class="ok">✅ App is running on Vercel!</span>
-    </p>
-    <p>Backend API endpoints:</p>
-    <ul>
-      <li><code>/api/recette</code> - Health check & cahier list</li>
-      <li><code>/api/cahiers</code> - Get all cahiers</li>
-      <li><code>/api/lots</code> - Get all lots</li>
-    </ul>
-  </div>
-
-  <div class="box">
-    <h2>Architecture</h2>
-    <p>Stack: Node.js + Express + Socket.IO + PostgreSQL (Neon)</p>
-    <p>Frontend migration: In progress</p>
-    <p>Database: <span id="db-status">Checking...</span></p>
-  </div>
-
   <script>
-    // Check API status
-    fetch('/api/recette')
+    fetch('/api/health')
       .then(r => r.json())
       .then(data => {
-        console.log('API Response:', data);
-        const dbEl = document.getElementById('db-status');
-        if (data.database === 'configured') {
-          dbEl.innerHTML = '<span class="ok">✅ PostgreSQL/Neon configured</span>';
-        } else {
-          dbEl.innerHTML = '<span class="error">❌ Database not configured</span>';
-        }
+        document.getElementById('status').innerHTML = 
+          `<span class="ok">✅ ${data.status} - Database: ${data.database}</span>`;
       })
       .catch(e => {
-        console.error('API Error:', e);
-        document.getElementById('db-status').innerHTML = '<span class="error">❌ API Error</span>';
+        document.getElementById('status').innerHTML = 
+          `<span style="color: #dc2626">❌ Error: ${e.message}</span>`;
       });
   </script>
 </body>
